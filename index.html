@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pl" translate="no" class="notranslate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptMaster AI - Uniwersalny Kreator Poleceń</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body { background-color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; color: #f8fafc; }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        
+        .toast-enter { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideIn {
+            from { transform: translateY(100%) translateX(-50%); opacity: 0; }
+            to { transform: translateY(0) translateX(-50%); opacity: 1; }
+        }
+
+        .input-glow:focus-within {
+            box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.3);
+            border-color: #6366f1;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const icons = {
+                Bot: <><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></>,
+                Copy: <><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></>,
+                Trash2: <><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></>,
+                User: <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+                Target: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>,
+                FileText: <><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>,
+                LayoutList: <><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><rect width="14" height="4" x="5" y="5" rx="1" ry="1"/><rect width="14" height="4" x="5" y="11" rx="1" ry="1"/></>,
+                ShieldAlert: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></>,
+                MessageSquare: <><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,
+                Zap: <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
+                CheckCircle: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>
+            };
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || null}
+                </svg>
+            );
+        };
+
+        const TEMPLATES = [
+            {
+                id: 'email',
+                name: 'E-mail Biznesowy',
+                icon: 'MessageSquare',
+                data: {
+                    role: 'doświadczony asystent zarządu i ekspert komunikacji biznesowej',
+                    task: 'Napisz profesjonalnego e-maila do klienta z przeprosinami za opóźnienie w dostawie projektu.',
+                    context: 'Projekt miał być oddany w piątek, ale z powodu problemów technicznych z serwerem, oddamy go w najbliższą środę. Klient jest z nami od lat i to nasze pierwsze opóźnienie.',
+                    audience: 'Dyrektor firmy partnerskiej, osoba formalna i zajęta.',
+                    format: 'E-mail (temat + treść). Maksymalnie 3 krótkie akapity.',
+                    tone: 'Profesjonalny, uprzejmy, pełen szacunku, ale bez nadmiernego usprawiedliwiania się.',
+                    constraints: 'Nie używaj potocznego słownictwa. Podaj konkretny termin nowej dostawy (środa).'
+                }
+            },
+            {
+                id: 'explain',
+                name: 'Tłumacz Pojęć',
+                icon: 'FileText',
+                data: {
+                    role: 'najlepszy nauczyciel na świecie, który potrafi wytłumaczyć wszystko w genialny sposób',
+                    task: 'Wyjaśnij mi, jak działa technologia Blockchain.',
+                    context: 'Słyszę o tym ciągle w wiadomościach, ale techniczne definicje w internecie są dla mnie całkowicie niezrozumiałe.',
+                    audience: 'Całkowity laik, który nie zna się na informatyce ani finansach.',
+                    format: 'Użyj 2-3 prostych akapitów. Wpleć minimum jedno porównanie do życia codziennego (np. do pamiętnika lub klocków LEGO).',
+                    tone: 'Zabawny, lekki, wciągający i wspierający.',
+                    constraints: 'Nie używaj żargonu informatycznego (jak hash, kryptografia asymetryczna) bez wcześniejszego wyjaśnienia ich na przykładzie.'
+                }
+            },
+            {
+                id: 'marketing',
+                name: 'Post na Social Media',
+                icon: 'Target',
+                data: {
+                    role: 'kreatywny Social Media Ninja i copywriter',
+                    task: 'Stwórz post na Instagram i Facebook promujący nowy produkt: Ekologiczne świece sojowe o zapachu lasu.',
+                    context: 'Świece są w 100% naturalne, ręcznie robione w Polsce. Czas palenia to 40 godzin. Wiosenna promocja: -15% z kodem WIOSNA.',
+                    audience: 'Osoby w wieku 25-40 lat, miłośnicy ekologii, przytulnego wnętrza i relaksu w domu.',
+                    format: 'Post z chwytliwym nagłówkiem (Hook), 2-3 krótkimi akapitami, wyraźnym Call To Action (CTA) i 5 odpowiednimi hashtagami.',
+                    tone: 'Inspirujący, ciepły, przytulny i lekko sprzedażowy.',
+                    constraints: 'Tekst musi mieć emoji, ale nie więcej niż jedno na akapit. Unikaj agresywnej sprzedaży ("KUP TERAZ").'
+                }
+            }
+        ];
+
+        function App() {
+            const [promptData, setPromptData] = useState({
+                role: '',
+                task: '',
+                context: '',
+                audience: '',
+                format: '',
+                tone: '',
+                constraints: ''
+            });
+
+            const [generatedPrompt, setGeneratedPrompt] = useState('');
+            const [showToast, setShowToast] = useState(false);
+            const [activeTemplate, setActiveTemplate] = useState(null);
+
+            // Aktualizacja wynikowego promptu na żywo
+            useEffect(() => {
+                let result = "";
+                
+                if (promptData.role || promptData.task) {
+                    result += "Oto Twoje instrukcje. Przeczytaj je uważnie przed wygenerowaniem odpowiedzi.\n\n";
+                }
+
+                if (promptData.role) result += `[TWOJA ROLA]\nDziałaj jako: ${promptData.role.trim()}.\n\n`;
+                if (promptData.task) result += `[TWOJE ZADANIE]\n${promptData.task.trim()}\n\n`;
+                if (promptData.context) result += `[KONTEKST I INFORMACJE]\n${promptData.context.trim()}\n\n`;
+                if (promptData.audience) result += `[GRUPA DOCELOWA / ODBIORCA]\n${promptData.audience.trim()}\n\n`;
+                if (promptData.format) result += `[FORMAT ODPOWIEDZI]\n${promptData.format.trim()}\n\n`;
+                if (promptData.tone) result += `[TON I STYL]\n${promptData.tone.trim()}\n\n`;
+                if (promptData.constraints) result += `[OGRANICZENIA I ZASADY KRYTYCZNE]\n${promptData.constraints.trim()}\n`;
+
+                setGeneratedPrompt(result.trim());
+            }, [promptData]);
+
+            const handleChange = (field, value) => {
+                setPromptData(prev => ({ ...prev, [field]: value }));
+                setActiveTemplate(null);
+            };
+
+            const loadTemplate = (template) => {
+                setPromptData(template.data);
+                setActiveTemplate(template.id);
+            };
+
+            const clearAll = () => {
+                setPromptData({ role: '', task: '', context: '', audience: '', format: '', tone: '', constraints: '' });
+                setActiveTemplate(null);
+            };
+
+            const copyToClipboard = () => {
+                if (!generatedPrompt) return;
+                navigator.clipboard.writeText(generatedPrompt).then(() => {
+                    setShowToast(true);
+                    setTimeout(() => setShowToast(false), 3000);
+                });
+            };
+
+            const autoSize = (e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+            };
+
+            const TextAreaField = ({ label, field, icon, placeholder, desc }) => (
+                <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 input-glow transition-all">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Icon name={icon} size={16} className="text-indigo-400" />
+                        <label className="font-bold text-slate-200 text-sm">{label}</label>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mb-3">{desc}</p>
+                    <textarea 
+                        value={promptData[field]} 
+                        onChange={(e) => { handleChange(field, e.target.value); autoSize(e); }}
+                        placeholder={placeholder}
+                        className="w-full bg-transparent border-none text-slate-300 text-sm outline-none resize-none overflow-hidden placeholder-slate-600"
+                        rows="1"
+                        style={{ minHeight: '40px' }}
+                    />
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen flex flex-col items-center p-4 md:p-8">
+                    
+                    {/* NAWIGACJA */}
+                    <nav className="w-full max-w-7xl glass-panel rounded-3xl p-4 px-6 md:px-8 flex flex-col md:flex-row justify-between items-center mb-8 gap-4 shadow-2xl">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2.5 rounded-xl shadow-lg">
+                                <Icon name="Bot" size={24} className="text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-black tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">PromptMaster <span className="text-indigo-400">AI</span></h1>
+                                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Uniwersalny Kreator Poleceń</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+                            {TEMPLATES.map(t => (
+                                <button 
+                                    key={t.id} 
+                                    onClick={() => loadTemplate(t)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeTemplate === t.id ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'}`}
+                                >
+                                    <Icon name={t.icon} size={14} /> {t.name}
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+
+                    {/* GŁÓWNY WIDOK */}
+                    <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                        
+                        {/* LEWY PANEL - KLOCKI BUDUJĄCE */}
+                        <div className="lg:col-span-7 flex flex-col gap-4">
+                            <div className="flex justify-between items-center px-2">
+                                <h2 className="text-lg font-bold flex items-center gap-2 text-slate-300">
+                                    <Icon name="LayoutList" size={20} className="text-indigo-500"/> Zbuduj swoje polecenie
+                                </h2>
+                                <button onClick={clearAll} className="text-xs font-bold text-red-400 hover:text-red-300 flex items-center gap-1 bg-red-400/10 px-3 py-1.5 rounded-lg transition-colors">
+                                    <Icon name="Trash2" size={14} /> Wyczyść
+                                </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 gap-4">
+                                <TextAreaField 
+                                    label="Rola (Kim ma być AI?)" field="role" icon="User" 
+                                    desc="Np. Ekspert marketingu, nauczyciel, prawnik, starszy programista."
+                                    placeholder="np. doświadczony copywriter i specjalista SEO..." 
+                                />
+                                <TextAreaField 
+                                    label="Zadanie (Co ma zrobić?)" field="task" icon="Zap" 
+                                    desc="Opisz główny cel. Używaj czasowników (Napisz, Wyjaśnij, Podsumuj)."
+                                    placeholder="np. Napisz artykuł na bloga o korzyściach picia zielonej herbaty..." 
+                                />
+                                <TextAreaField 
+                                    label="Kontekst (Dodatkowe informacje)" field="context" icon="FileText" 
+                                    desc="Tło sytuacji. Podaj fakty, które AI musi uwzględnić."
+                                    placeholder="np. Moja firma sprzedaje herbatę z Japonii. Ostatnio dodaliśmy nowe smaki..." 
+                                />
+                                <TextAreaField 
+                                    label="Grupa docelowa (Dla kogo?)" field="audience" icon="Target" 
+                                    desc="Do kogo piszemy? (Dzieci, laicy, zarząd, specjaliści)."
+                                    placeholder="np. Zapracowane matki, które szukają chwili relaksu..." 
+                                />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <TextAreaField 
+                                        label="Format odpowiedzi" field="format" icon="LayoutList" 
+                                        desc="Jak ma wyglądać tekst?"
+                                        placeholder="np. Tabela z 3 kolumnami / Punktowana lista..." 
+                                    />
+                                    <TextAreaField 
+                                        label="Ton i Styl" field="tone" icon="MessageSquare" 
+                                        desc="Jaki charakter ma mieć tekst?"
+                                        placeholder="np. Profesjonalny, z humorem, przekonujący..." 
+                                    />
+                                </div>
+                                <TextAreaField 
+                                    label="Ograniczenia (Zasady)" field="constraints" icon="ShieldAlert" 
+                                    desc="Czego AI NIE MOŻE robić lub co musi uwzględnić?"
+                                    placeholder="np. Nie używaj trudnego żargonu, tekst max. na 200 słów..." 
+                                />
+                            </div>
+                        </div>
+
+                        {/* PRAWY PANEL - WYNIK */}
+                        <div className="lg:col-span-5 lg:sticky lg:top-8">
+                            <div className="glass-panel rounded-[2rem] p-6 md:p-8 flex flex-col h-[calc(100vh-2rem)] max-h-[800px] shadow-2xl relative overflow-hidden">
+                                
+                                {/* Tło akcentowe */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
+                                
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-lg font-black text-white flex items-center gap-2">
+                                        <Icon name="Bot" size={20} className="text-purple-400"/> Twój Mega-Prompt
+                                    </h2>
+                                    <span className="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-400 uppercase tracking-widest border border-slate-700">Podgląd na żywo</span>
+                                </div>
+                                
+                                <div className="flex-1 bg-slate-900/80 rounded-2xl border border-slate-700 p-5 overflow-y-auto custom-scrollbar relative group">
+                                    {generatedPrompt ? (
+                                        <pre className="font-sans text-sm text-indigo-100 whitespace-pre-wrap leading-relaxed">{generatedPrompt}</pre>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4 opacity-50">
+                                            <Icon name="LayoutList" size={48} />
+                                            <p className="text-sm font-medium text-center">Wypełnij pola po lewej stronie,<br/>aby zbudować swój prompt.</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-6 pt-6 border-t border-slate-700/50 space-y-4">
+                                    <button 
+                                        onClick={copyToClipboard}
+                                        disabled={!generatedPrompt}
+                                        className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-800 disabled:text-slate-500 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
+                                    >
+                                        <Icon name="Copy" size={20} /> SKOPIUJ PROMPT DO SCHOWKA
+                                    </button>
+                                    <p className="text-[11px] text-center text-slate-400 font-medium">Skopiuj i wklej gotowy tekst prosto do ChatGPT, Claude lub Gemini.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* POWIADOMIENIE (TOAST) */}
+                    {showToast && (
+                        <div className="fixed bottom-10 left-1/2 z-50 toast-enter flex items-center gap-3 bg-emerald-500 text-white px-6 py-3 rounded-full font-bold shadow-xl shadow-emerald-500/20">
+                            <Icon name="CheckCircle" size={20} /> Prompt skopiowany!
+                        </div>
+                    )}
+                    
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
