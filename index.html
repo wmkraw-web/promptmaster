@@ -107,6 +107,33 @@
             }
         ];
 
+        // WAŻNE: Komponent pola tekstowego przeniesiony na zewnątrz głównej aplikacji, 
+        // aby React nie resetował go przy każdym naciśnięciu klawisza!
+        const TextAreaField = ({ label, field, icon, placeholder, desc, value, onChange }) => {
+            const autoSize = (e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+            };
+
+            return (
+                <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 input-glow transition-all">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Icon name={icon} size={16} className="text-indigo-400" />
+                        <label className="font-bold text-slate-200 text-sm">{label}</label>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mb-3">{desc}</p>
+                    <textarea 
+                        value={value} 
+                        onChange={(e) => { onChange(field, e.target.value); autoSize(e); }}
+                        placeholder={placeholder}
+                        className="w-full bg-transparent border-none text-slate-300 text-sm outline-none resize-none overflow-hidden placeholder-slate-600"
+                        rows="1"
+                        style={{ minHeight: '40px' }}
+                    />
+                </div>
+            );
+        };
+
         function App() {
             const [promptData, setPromptData] = useState({
                 role: '',
@@ -164,29 +191,6 @@
                 });
             };
 
-            const autoSize = (e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-            };
-
-            const TextAreaField = ({ label, field, icon, placeholder, desc }) => (
-                <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 input-glow transition-all">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Icon name={icon} size={16} className="text-indigo-400" />
-                        <label className="font-bold text-slate-200 text-sm">{label}</label>
-                    </div>
-                    <p className="text-[11px] text-slate-400 mb-3">{desc}</p>
-                    <textarea 
-                        value={promptData[field]} 
-                        onChange={(e) => { handleChange(field, e.target.value); autoSize(e); }}
-                        placeholder={placeholder}
-                        className="w-full bg-transparent border-none text-slate-300 text-sm outline-none resize-none overflow-hidden placeholder-slate-600"
-                        rows="1"
-                        style={{ minHeight: '40px' }}
-                    />
-                </div>
-            );
-
             return (
                 <div className="min-h-screen flex flex-col items-center p-4 md:p-8">
                     
@@ -233,38 +237,52 @@
                                     label="Rola (Kim ma być AI?)" field="role" icon="User" 
                                     desc="Np. Ekspert marketingu, nauczyciel, prawnik, starszy programista."
                                     placeholder="np. doświadczony copywriter i specjalista SEO..." 
+                                    value={promptData.role}
+                                    onChange={handleChange}
                                 />
                                 <TextAreaField 
                                     label="Zadanie (Co ma zrobić?)" field="task" icon="Zap" 
                                     desc="Opisz główny cel. Używaj czasowników (Napisz, Wyjaśnij, Podsumuj)."
                                     placeholder="np. Napisz artykuł na bloga o korzyściach picia zielonej herbaty..." 
+                                    value={promptData.task}
+                                    onChange={handleChange}
                                 />
                                 <TextAreaField 
                                     label="Kontekst (Dodatkowe informacje)" field="context" icon="FileText" 
                                     desc="Tło sytuacji. Podaj fakty, które AI musi uwzględnić."
                                     placeholder="np. Moja firma sprzedaje herbatę z Japonii. Ostatnio dodaliśmy nowe smaki..." 
+                                    value={promptData.context}
+                                    onChange={handleChange}
                                 />
                                 <TextAreaField 
                                     label="Grupa docelowa (Dla kogo?)" field="audience" icon="Target" 
                                     desc="Do kogo piszemy? (Dzieci, laicy, zarząd, specjaliści)."
                                     placeholder="np. Zapracowane matki, które szukają chwili relaksu..." 
+                                    value={promptData.audience}
+                                    onChange={handleChange}
                                 />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <TextAreaField 
                                         label="Format odpowiedzi" field="format" icon="LayoutList" 
                                         desc="Jak ma wyglądać tekst?"
                                         placeholder="np. Tabela z 3 kolumnami / Punktowana lista..." 
+                                        value={promptData.format}
+                                        onChange={handleChange}
                                     />
                                     <TextAreaField 
                                         label="Ton i Styl" field="tone" icon="MessageSquare" 
                                         desc="Jaki charakter ma mieć tekst?"
                                         placeholder="np. Profesjonalny, z humorem, przekonujący..." 
+                                        value={promptData.tone}
+                                        onChange={handleChange}
                                     />
                                 </div>
                                 <TextAreaField 
                                     label="Ograniczenia (Zasady)" field="constraints" icon="ShieldAlert" 
                                     desc="Czego AI NIE MOŻE robić lub co musi uwzględnić?"
                                     placeholder="np. Nie używaj trudnego żargonu, tekst max. na 200 słów..." 
+                                    value={promptData.constraints}
+                                    onChange={handleChange}
                                 />
                             </div>
                         </div>
